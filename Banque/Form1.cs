@@ -184,6 +184,9 @@ namespace Banque
 
                 c.GenererMdp(tmp);
 
+                rtbOuput.AppendText("\nVoici votre mot de passe "+ c.Password);
+                rtbOuput.AppendText("\n");
+
                 Start();
 
             }
