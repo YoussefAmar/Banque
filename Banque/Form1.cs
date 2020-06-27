@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 namespace Banque
 {
@@ -16,9 +17,9 @@ namespace Banque
     {
         private static int etat;
         private Client c;
-        private XmlSerializer xs;
         private StreamWriter wr;
-        private string fichier;
+        private StreamReader sr;
+        private string ficnom,jsondata;
 
         public BanqueForm()
         {
@@ -47,7 +48,7 @@ namespace Banque
         {
             switch (etat)
             {
-                case 0: c = new Client(tbInput.Text); fichier = tbInput.Text + ".xml"; Start();  break;
+                case 0: ficnom = "Client_" + tbInput.Text + ".txt"; Lecture();  Start();  break;
 
                 case 1:
 
@@ -71,9 +72,9 @@ namespace Banque
 
                     } break;
 
-                case 2: try { Virement(Double.Parse(tbInput.Text)); } catch { rtbOuput.AppendText("\nVeuillez entrer une valeur\n"); etat = 1; } ; break;
+                case 2: try { Virement(Double.Parse(tbInput.Text)); } catch { rtbOuput.AppendText("\nVeuillez entrer une valeur\n"); etat = 2; } ; break;
 
-                case 3: try { Retrait(Double.Parse(tbInput.Text)); } catch { rtbOuput.AppendText("\nVeuillez entrer une valeur\n"); etat = 1; }; break;
+                case 3: try { Retrait(Double.Parse(tbInput.Text)); } catch { rtbOuput.AppendText("\nVeuillez entrer une valeur\n"); etat = 3; }; break;
 
             }
 
@@ -131,15 +132,36 @@ namespace Banque
         {
             try
             {
-                xs = new XmlSerializer(c.GetType());
+                wr = new StreamWriter(ficnom);
 
-                wr = new StreamWriter(fichier);
+                jsondata = JsonConvert.SerializeObject(c);
 
-                xs.Serialize(wr, c);
+                wr.Write(jsondata);
+
+                wr.Close();
             }
             catch { base.OnFormClosing(e); }
 
             base.OnFormClosing(e);
+        }
+
+        public void Lecture()
+        {
+
+            if (File.Exists(ficnom))
+            {
+                sr = new StreamReader(ficnom);
+
+                jsondata = sr.ReadToEnd();
+
+                c = JsonConvert.DeserializeObject<Client>(jsondata);
+
+                sr.Close();
+
+            }
+            else
+                 c = new Client(tbInput.Text);
+
         }
 
     }
@@ -149,14 +171,6 @@ namespace Banque
         private string nom;
         private double montant;
         private List<double> virement, retrait;
-
-        public Client()
-        {
-            this.nom = "";
-            this.montant = 0;
-            virement = new List<double>();
-            retrait = new List<double>();
-        }
 
         public Client(string n)
         {
